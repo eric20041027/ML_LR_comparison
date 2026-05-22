@@ -4,11 +4,12 @@ import json
 from pathlib import Path
 
 from scripts.run_experiment import load_config
-from src.data import DATASETS
 from src.profiles import PROFILES, apply_profile
 from src.train import train
 
-# Map dataset -> ordered list of configs.
+# Map config-group name -> ordered list of configs. A group is not necessarily
+# a literal dataset (imagewoof_scratch points to imagewoof data but trains
+# from random init with stronger aug).
 CONFIGS = {
     "tiny_imagenet": [
         "configs/fixed.yaml",
@@ -24,14 +25,23 @@ CONFIGS = {
         "configs/imagewoof_cosine_restart.yaml",
         "configs/imagewoof_onecycle.yaml",
     ],
+    "imagewoof_scratch": [
+        "configs/imagewoof_scratch_fixed.yaml",
+        "configs/imagewoof_scratch_step.yaml",
+        "configs/imagewoof_scratch_cosine.yaml",
+        "configs/imagewoof_scratch_cosine_restart.yaml",
+        "configs/imagewoof_scratch_onecycle.yaml",
+    ],
 }
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", default="tiny_imagenet",
-                    choices=sorted(DATASETS),
-                    help="Which dataset's 5 configs to run")
+                    choices=sorted(CONFIGS),
+                    help="Config-group name (matches keys in CONFIGS). May or may not "
+                         "be a literal dataset, e.g. imagewoof_scratch reuses imagewoof "
+                         "data but trains from scratch with stronger aug.")
     ap.add_argument("--data-root", default=None)
     ap.add_argument("--output-dir", default=None)
     ap.add_argument("--epochs", type=int, default=None)

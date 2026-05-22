@@ -11,6 +11,7 @@
 | Phase 1 — Tiny-ImageNet 訓練 + 視覺化 | ✅ 完成 | [`results/tiny_imagenet/`](results/tiny_imagenet/) |
 | Phase 2 — Imagewoof 訓練 + 視覺化 | ✅ 完成 | [`results/imagewoof/`](results/imagewoof/) |
 | 跨資料集對比分析 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) §6 |
+| Phase 3 — Imagewoof from-scratch (80ep + MixUp + RandAug) | 🚧 待執行 | (預計 ~100 分鐘 on A100) |
 | 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
 
 **結果摘要**（ResNet-18 pretrained、20 epoch、A100、batch=384、base_lr=3e-4）：

@@ -1,0 +1,17 @@
+scheduler: fixed
+dataset: imagewoof
+num_classes: 10
+run_name: fixed
+pretrained: false
+# Compensating for the loss of ImageNet init:
+epochs: 80
+aug: strong
+mixup_alpha: 0.2
+label_smoothing: 0.1
+base_lr: 5.0e-4
+weight_decay: 5.0e-4
+batch_size: 128
+image_size: 224
+num_workers: 2
+# Epoch 1 from-scratch is basically random; start the early-stage CAM later.
+capture_epochs: [5, 40, 80]

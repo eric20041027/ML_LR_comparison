@@ -133,16 +133,12 @@ def _reorganize_tiny_imagenet_val(root: Path) -> None:
 
 # ---------- Transforms / loaders ----------
 
-def build_transforms(image_size: int = 224, train: bool = True):
+def build_transforms(image_size: int = 224, train: bool = True, aug: str = "basic"):
     if train:
-        return transforms.Compose([
-            transforms.Resize(image_size),
-            transforms.RandomCrop(image_size, padding=8),
-            transforms.RandomHorizontalFlip(),
-            transforms.ColorJitter(0.2, 0.2, 0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-        ])
+        # Delegate to augment.py so the from-scratch 'strong' pipeline lives
+        # alongside MixUp. Local import avoids a circular import at module load.
+        from .augment import build_train_transform
+        return build_train_transform(image_size, aug=aug)
     return transforms.Compose([
         transforms.Resize(image_size),
         transforms.CenterCrop(image_size),
@@ -166,15 +162,18 @@ def _resolve_data_root(dataset: str, data_root: str | os.PathLike) -> Path:
     )
 
 
-def get_datasets(dataset: str, data_root: str | os.PathLike, image_size: int = 224):
+def get_datasets(dataset: str, data_root: str | os.PathLike, image_size: int = 224,
+                 aug: str = "basic"):
     if dataset not in DATASETS:
         raise ValueError(f"Unknown dataset {dataset!r}. Choose from {sorted(DATASETS)}")
     spec = DATASETS[dataset]
     root = _resolve_data_root(dataset, data_root)
     if spec.needs_val_reorg:
         _reorganize_tiny_imagenet_val(root)
-    train_ds = datasets.ImageFolder(root / "train", transform=build_transforms(image_size, train=True))
-    val_ds = datasets.ImageFolder(root / "val", transform=build_transforms(image_size, train=False))
+    train_ds = datasets.ImageFolder(root / "train",
+                                    transform=build_transforms(image_size, train=True, aug=aug))
+    val_ds = datasets.ImageFolder(root / "val",
+                                  transform=build_transforms(image_size, train=False))
     return train_ds, val_ds
 
 
@@ -184,8 +183,9 @@ def get_loaders(
     batch_size: int = 128,
     num_workers: int = 2,
     image_size: int = 224,
+    aug: str = "basic",
 ):
-    train_ds, val_ds = get_datasets(dataset, data_root, image_size=image_size)
+    train_ds, val_ds = get_datasets(dataset, data_root, image_size=image_size, aug=aug)
     train_loader = DataLoader(
         train_ds, batch_size=batch_size, shuffle=True,
         num_workers=num_workers, pin_memory=True, drop_last=True,

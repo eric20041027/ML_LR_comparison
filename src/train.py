@@ -15,6 +15,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from . import schedulers as sched_mod
+from .augment import MixUp, mixup_criterion
 from .data import get_loaders
 from .model import build_resnet18
 from .utils import accuracy, get_device, get_logger, set_seed
@@ -36,6 +37,10 @@ class TrainConfig:
     num_classes: int = 200
     pretrained: bool = False
     seed: int = 42
+    # Augmentation / regularization (used by from-scratch recipe)
+    aug: str = "basic"               # "basic" | "strong" (adds RandAugment)
+    mixup_alpha: float = 0.0          # 0 disables; typical 0.1 - 0.4
+    label_smoothing: float = 0.0      # 0 disables; typical 0.1
     # Capture checkpoints at these epoch indices (1-based). If None, auto-pick
     # early / mid / late based on `epochs`.
     capture_epochs: list[int] | None = None
@@ -101,6 +106,7 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
         batch_size=cfg.batch_size,
         num_workers=cfg.num_workers,
         image_size=cfg.image_size,
+        aug=cfg.aug,
     )
     if len(classes) != cfg.num_classes:
         logger.warning(
@@ -112,7 +118,14 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     logger.info(f"steps_per_epoch={steps_per_epoch}, classes={len(classes)}, device={device}")
 
     model = build_resnet18(num_classes=cfg.num_classes, pretrained=cfg.pretrained).to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(label_smoothing=cfg.label_smoothing)
+    mixup = MixUp(alpha=cfg.mixup_alpha) if cfg.mixup_alpha > 0 else None
+    if mixup is not None:
+        logger.info(f"MixUp enabled (alpha={cfg.mixup_alpha})")
+    if cfg.label_smoothing > 0:
+        logger.info(f"label_smoothing={cfg.label_smoothing}")
+    if cfg.aug == "strong":
+        logger.info("Augmentation: strong (RandAugment + ColorJitter + Flip + Crop)")
     optimizer = AdamW(model.parameters(), lr=cfg.base_lr, weight_decay=cfg.weight_decay)
 
     bundle = sched_mod.build_scheduler(
@@ -147,9 +160,20 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
             x = x.to(device, non_blocking=True)
             y = y.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            with autocast(enabled=amp_enabled):
-                logits = model(x)
-                loss = criterion(logits, y)
+            if mixup is not None:
+                x, y_a, y_b, lam = mixup(x, y)
+                with autocast(enabled=amp_enabled):
+                    logits = model(x)
+                    loss = mixup_criterion(criterion, logits, y_a, y_b, lam)
+                # Report train acc against the dominant label (y_a == original y here
+                # since MixUp.__call__ keeps y as y_a). Slightly conservative but
+                # interpretable.
+                correct = (logits.argmax(1) == y_a).sum().item()
+            else:
+                with autocast(enabled=amp_enabled):
+                    logits = model(x)
+                    loss = criterion(logits, y)
+                correct = (logits.argmax(1) == y).sum().item()
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -161,7 +185,7 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
             history["lr_per_step"].append(lr)
 
             running_loss += loss.item() * x.size(0)
-            running_correct += (logits.argmax(1) == y).sum().item()
+            running_correct += correct
             running_total += x.size(0)
             global_step += 1
             pbar.set_postfix(loss=f"{loss.item():.3f}", lr=f"{lr:.2e}")
