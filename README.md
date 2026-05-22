@@ -4,6 +4,26 @@
 
 以 **ResNet-18** 在 **Tiny-ImageNet (200 類)** 上訓練影像分類器，對比 5 種學習率排程的收斂行為與泛化能力，並以 **Grad-CAM** 視覺化各排程在訓練早 / 中 / 晚期的特徵聚焦演進。
 
+## 進度與結果
+
+| 階段 | 狀態 | 產出 |
+|------|------|------|
+| Phase 1 — Tiny-ImageNet 訓練 + 視覺化 | ✅ 完成 | [`results/tiny_imagenet/`](results/tiny_imagenet/) |
+| Phase 2 — Imagewoof 對比實驗 | 🚧 規劃中 | — |
+| 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
+
+**Tiny-ImageNet 主要結果**（ResNet-18 pretrained、20 epoch、A100、batch=384）：
+
+| Scheduler | Best Val Acc | Final Val Acc | Final Train Acc |
+|-----------|:------------:|:-------------:|:---------------:|
+| `cosine_restart` | **70.57%** | 62.97% | 93.80% |
+| `step` | 69.97% | **69.82%** | 98.03% |
+| `cosine` | 69.40% | 69.32% | 99.92% |
+| `onecycle` | 66.42% | 66.35% | 99.69% |
+| `fixed` | 62.69% | 61.21% | 94.49% |
+
+完整分析見 [`docs/REPORT.md`](docs/REPORT.md)。
+
 ## 排程對照組
 
 | ID | Scheduler | 重點 |
@@ -22,8 +42,11 @@
 │   ├── data.py          # Tiny-ImageNet 下載 + DataLoader
 │   ├── model.py         # ResNet-18 (200 類)
 │   ├── schedulers.py    # 5 種 scheduler factory
-│   ├── train.py         # 訓練 / 驗證 / checkpoint
+│   ├── train.py         # 訓練 / 驗證 / checkpoint (AMP + TF32)
+│   ├── profiles.py      # t4 / a100 GPU profile
 │   ├── gradcam_viz.py   # Grad-CAM 對比圖
+│   ├── plot_lr.py       # LR 曲線繪圖
+│   ├── plot_curves.py   # train/val 曲線繪圖
 │   └── utils.py
 ├── scripts/
 │   ├── download_data.py
@@ -31,8 +54,17 @@
 │   └── run_all.py
 ├── configs/             # 5 個 YAML 實驗設定
 ├── notebooks/
-│   └── colab_main.ipynb # Colab 入口
-└── experiments/         # 訓練輸出 (gitignored)
+│   └── colab_main.ipynb # Colab 入口（GPU 自動偵測）
+├── results/             # 已封存的訓練結果（commit 入庫）
+│   └── tiny_imagenet/
+│       ├── summary.json       # 5 組訓練的全部 epoch 級指標
+│       ├── training_log.txt   # 完整 stdout 紀錄
+│       ├── lr_curves.png
+│       ├── curves.png
+│       └── grad_cam_grid.png
+├── docs/
+│   └── REPORT.md        # 詳細進度報告
+└── experiments/         # 當下訓練輸出 (gitignored，會寫到 Drive)
 ```
 
 ## 快速開始 (Colab)
