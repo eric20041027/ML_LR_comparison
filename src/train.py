@@ -87,6 +87,10 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     logger = get_logger(f"train.{run_name}", log_file=str(out_dir / "train.log"))
 
+    # Resolve capture_epochs upfront so the persisted config records the *actual*
+    # epochs that will get checkpoints (downstream Grad-CAM relies on this).
+    cfg.capture_epochs = cfg.resolve_capture_epochs()
+
     # Persist config for downstream tools (Grad-CAM) to read back.
     with (out_dir / "config.json").open("w") as f:
         json.dump(asdict(cfg), f, indent=2)

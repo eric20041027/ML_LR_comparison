@@ -114,9 +114,42 @@ def list_runs(experiments_dir: Path) -> list[Path]:
                   if p.is_dir() and (p / "checkpoints").exists())
 
 
+def _canonical_capture_epochs(run_dir: Path) -> list[int] | None:
+    """Look up the canonical capture_epochs for this run.
+
+    Reads from `summary.json` (always populated) first, then `config.json`
+    (only populated if resolve_capture_epochs was called). Returns None if
+    neither file gives a usable list — callers should fall back to glob.
+    """
+    for fname in ("summary.json", "config.json"):
+        p = run_dir / fname
+        if not p.exists():
+            continue
+        try:
+            with p.open() as f:
+                data = json.load(f)
+            ce = data.get("capture_epochs")
+            if ce:  # non-null, non-empty
+                return sorted(int(e) for e in ce)
+        except Exception:
+            pass
+    return None
+
+
 def list_stage_checkpoints(run_dir: Path) -> list[Path]:
-    """Return checkpoint files for the saved early/mid/late stages, sorted by epoch."""
-    return sorted((run_dir / "checkpoints").glob("epoch_*.pth"))
+    """Return checkpoint files for THIS RUN's capture_epochs only, sorted by epoch.
+
+    Filters out stale .pth files left by earlier interrupted runs (different
+    epoch budgets leave behind different capture sets in the same folder).
+    Falls back to globbing all if the metadata is missing.
+    """
+    ckpt_dir = run_dir / "checkpoints"
+    canonical = _canonical_capture_epochs(run_dir)
+    if canonical:
+        return [ckpt_dir / f"epoch_{e:03d}.pth"
+                for e in canonical
+                if (ckpt_dir / f"epoch_{e:03d}.pth").exists()]
+    return sorted(ckpt_dir.glob("epoch_*.pth"))
 
 
 def build_grid(
