@@ -9,6 +9,7 @@ from typing import Any
 
 import torch
 import torch.nn as nn
+from torch.cuda.amp import GradScaler, autocast
 from torch.optim import AdamW
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -38,6 +39,10 @@ class TrainConfig:
     # early / mid / late based on `epochs`.
     capture_epochs: list[int] | None = None
     run_name: str | None = None
+    # GPU acceleration knobs (set by profile, not by user YAML)
+    use_amp: bool = False
+    tf32: bool = False
+    profile: str | None = None
 
     def resolve_capture_epochs(self) -> list[int]:
         if self.capture_epochs:
@@ -45,16 +50,18 @@ class TrainConfig:
         return sorted({1, max(1, self.epochs // 2), self.epochs})
 
 
-def _eval(model: nn.Module, loader, device, criterion) -> tuple[float, float]:
+def _eval(model: nn.Module, loader, device, criterion, use_amp: bool = False) -> tuple[float, float]:
     model.eval()
     total_loss = 0.0
     total_correct = 0
     total = 0
+    amp_enabled = use_amp and device.type == "cuda"
     with torch.no_grad():
         for x, y in loader:
             x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
-            logits = model(x)
-            loss = criterion(logits, y)
+            with autocast(enabled=amp_enabled):
+                logits = model(x)
+                loss = criterion(logits, y)
             total_loss += loss.item() * x.size(0)
             total_correct += (logits.argmax(1) == y).sum().item()
             total += x.size(0)
@@ -64,6 +71,14 @@ def _eval(model: nn.Module, loader, device, criterion) -> tuple[float, float]:
 def train(cfg: TrainConfig) -> dict[str, Any]:
     set_seed(cfg.seed)
     device = get_device()
+
+    if cfg.tf32 and device.type == "cuda":
+        # Ampere+ Tensor Cores: ~2-3x matmul/conv speedup with no code changes
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+
+    amp_enabled = cfg.use_amp and device.type == "cuda"
+    scaler = GradScaler(enabled=amp_enabled)
 
     run_name = cfg.run_name or cfg.scheduler
     out_dir = Path(cfg.output_dir) / run_name
@@ -120,10 +135,12 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
             x = x.to(device, non_blocking=True)
             y = y.to(device, non_blocking=True)
             optimizer.zero_grad(set_to_none=True)
-            logits = model(x)
-            loss = criterion(logits, y)
-            loss.backward()
-            optimizer.step()
+            with autocast(enabled=amp_enabled):
+                logits = model(x)
+                loss = criterion(logits, y)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             if step_granularity == "batch":
                 scheduler.step()
 
@@ -142,7 +159,7 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
 
         train_loss = running_loss / running_total
         train_acc = 100.0 * running_correct / running_total
-        val_loss, val_acc = _eval(model, val_loader, device, criterion)
+        val_loss, val_acc = _eval(model, val_loader, device, criterion, use_amp=amp_enabled)
 
         history["train_loss"].append(train_loss)
         history["train_acc"].append(train_acc)

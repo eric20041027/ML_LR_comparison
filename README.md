@@ -56,8 +56,11 @@ python -m scripts.run_experiment --config configs/cosine.yaml
 跑完所有 5 組：
 
 ```bash
-python -m scripts.run_all
+python -m scripts.run_all --profile t4    # T4 / V100 (預設參數)
+python -m scripts.run_all --profile a100  # A100：大 batch + AMP + TF32 + 線性 LR scaling
 ```
+
+`colab_main.ipynb` 會自動偵測 GPU 並選對應 profile，本地執行才需手動指定。
 
 ## 視覺化
 

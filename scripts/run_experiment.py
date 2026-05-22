@@ -5,6 +5,7 @@ from pathlib import Path
 
 import yaml
 
+from src.profiles import PROFILES, apply_profile
 from src.train import TrainConfig, train
 
 
@@ -24,6 +25,9 @@ def main():
     ap.add_argument("--data-root", default=None, help="Override data_root")
     ap.add_argument("--output-dir", default=None, help="Override output_dir")
     ap.add_argument("--epochs", type=int, default=None, help="Override epochs")
+    ap.add_argument("--profile", default="none",
+                    choices=["none", *sorted(PROFILES)],
+                    help="GPU profile: applies batch/workers/amp/tf32 + LR scaling")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -33,6 +37,7 @@ def main():
         cfg.output_dir = args.output_dir
     if args.epochs is not None:
         cfg.epochs = args.epochs
+    apply_profile(cfg, args.profile)
 
     summary = train(cfg)
     print("===== summary =====")

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from scripts.run_experiment import load_config
+from src.profiles import PROFILES, apply_profile
 from src.train import train
 
 CONFIGS = [
@@ -20,6 +21,9 @@ def main():
     ap.add_argument("--data-root", default=None)
     ap.add_argument("--output-dir", default=None)
     ap.add_argument("--epochs", type=int, default=None)
+    ap.add_argument("--profile", default="none",
+                    choices=["none", *sorted(PROFILES)],
+                    help="GPU profile: applies batch/workers/amp/tf32 + LR scaling")
     args = ap.parse_args()
 
     results = []
@@ -34,7 +38,10 @@ def main():
             cfg.output_dir = args.output_dir
         if args.epochs is not None:
             cfg.epochs = args.epochs
-        print(f"\n========== running: {cfg.run_name} ({cfg.scheduler}) ==========")
+        apply_profile(cfg, args.profile)
+        print(f"\n========== running: {cfg.run_name} ({cfg.scheduler}) "
+              f"[profile={args.profile}, bs={cfg.batch_size}, "
+              f"amp={cfg.use_amp}, tf32={cfg.tf32}] ==========")
         summary = train(cfg)
         results.append(summary)
 
