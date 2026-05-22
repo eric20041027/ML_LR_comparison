@@ -7,4 +7,4 @@ max_lr: 1.0e-2
 weight_decay: 5.0e-4
 image_size: 224
 num_workers: 2
-pretrained: false
+pretrained: true
