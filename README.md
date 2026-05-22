@@ -2,14 +2,15 @@
 
 機器學習期末專題：動態學習率排程之效能對比與特徵視覺化分析。
 
-以 **ResNet-18** 在 **Tiny-ImageNet (200 類)** 上訓練影像分類器，對比 5 種學習率排程的收斂行為與泛化能力，並以 **Grad-CAM** 視覺化各排程在訓練早 / 中 / 晚期的特徵聚焦演進。
+以 **ResNet-18** 在 **Tiny-ImageNet (200 類)** 與 **Imagewoof (10 細粒度狗品種)** 上訓練影像分類器，對比 5 種學習率排程的收斂行為與泛化能力，並以 **Grad-CAM** 視覺化各排程在訓練早 / 中 / 晚期的特徵聚焦演進。
 
 ## 進度與結果
 
 | 階段 | 狀態 | 產出 |
 |------|------|------|
 | Phase 1 — Tiny-ImageNet 訓練 + 視覺化 | ✅ 完成 | [`results/tiny_imagenet/`](results/tiny_imagenet/) |
-| Phase 2 — Imagewoof 對比實驗 | 🚧 規劃中 | — |
+| Phase 2 — Imagewoof 程式碼支援 (configs + data loader) | ✅ 完成 | [`configs/imagewoof_*.yaml`](configs/) |
+| Phase 2 — Imagewoof 訓練 + 視覺化 | 🚧 待執行 | (預計 ~15 分鐘 on A100) |
 | 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
 
 **Tiny-ImageNet 主要結果**（ResNet-18 pretrained、20 epoch、A100、batch=384）：
@@ -81,18 +82,28 @@
 ## 本地執行（單一實驗）
 
 ```bash
-python -m scripts.download_data --data-dir ./data
-python -m scripts.run_experiment --config configs/cosine.yaml
+# 下載資料集（首次）
+python -m scripts.download_data --dataset tiny_imagenet --data-dir ./data
+python -m scripts.download_data --dataset imagewoof --data-dir ./data
+
+# 跑單一 config
+python -m scripts.run_experiment --config configs/cosine.yaml --data-root ./data
+python -m scripts.run_experiment --config configs/imagewoof_cosine.yaml --data-root ./data
 ```
 
-跑完所有 5 組：
+跑完整個資料集的 5 組對比：
 
 ```bash
-python -m scripts.run_all --profile t4    # T4 / V100 (預設參數)
-python -m scripts.run_all --profile a100  # A100：大 batch + AMP + TF32 + 線性 LR scaling
+# Tiny-ImageNet
+python -m scripts.run_all --dataset tiny_imagenet --data-root ./data \
+    --output-dir ./experiments/tiny_imagenet --profile a100
+
+# Imagewoof
+python -m scripts.run_all --dataset imagewoof --data-root ./data \
+    --output-dir ./experiments/imagewoof --profile a100
 ```
 
-`colab_main.ipynb` 會自動偵測 GPU 並選對應 profile，本地執行才需手動指定。
+`colab_main.ipynb` 會自動偵測 GPU 並選對應 profile (`t4` / `a100`)，本地執行才需手動指定。
 
 ## 視覺化
 

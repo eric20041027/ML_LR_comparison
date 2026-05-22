@@ -17,7 +17,7 @@ from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchvision import transforms
 
-from .data import IMAGENET_MEAN, IMAGENET_STD
+from .data import DATASETS, IMAGENET_MEAN, IMAGENET_STD, _resolve_data_root
 from .model import build_resnet18, get_target_layer
 from .utils import get_device
 
@@ -46,6 +46,18 @@ def load_checkpoint(ckpt_path: Path, num_classes: int, device) -> torch.nn.Modul
     return model
 
 
+def _read_run_num_classes(run_dir: Path, fallback: int) -> int:
+    """Best-effort: read num_classes from a run's saved config.json."""
+    cfg_path = run_dir / "config.json"
+    if not cfg_path.exists():
+        return fallback
+    try:
+        with cfg_path.open() as f:
+            return int(json.load(f).get("num_classes", fallback))
+    except Exception:
+        return fallback
+
+
 def compute_cam(model, input_tensor, target_class: int | None = None) -> np.ndarray:
     target_layer = get_target_layer(model)
     cam = GradCAM(model=model, target_layers=[target_layer])
@@ -57,13 +69,42 @@ def compute_cam(model, input_tensor, target_class: int | None = None) -> np.ndar
     return grayscale  # (H, W) in [0, 1]
 
 
-def pick_default_image(data_root: Path) -> Path:
+def _resolve_dataset_root(data_root: Path, experiments_dir: Path) -> Path:
+    """If `data_root` already contains val/, use it.
+    Otherwise, infer dataset name from any run's config.json and resolve under data_root.
+    """
+    if (data_root / "val").exists():
+        return data_root
+    # Try to read dataset name from any run's config.json
+    for run in experiments_dir.iterdir() if experiments_dir.exists() else []:
+        cfg = run / "config.json"
+        if cfg.exists():
+            try:
+                with cfg.open() as f:
+                    ds = json.load(f).get("dataset")
+                if ds and ds in DATASETS:
+                    return _resolve_data_root(ds, data_root)
+            except Exception:
+                pass
+    # Fallback: just try both
+    for ds in DATASETS:
+        try:
+            return _resolve_data_root(ds, data_root)
+        except FileNotFoundError:
+            continue
+    raise FileNotFoundError(f"Could not locate a dataset under {data_root}")
+
+
+def pick_default_image(data_root: Path, experiments_dir: Path | None = None) -> Path:
     """Pick the first val image we can find as a deterministic default."""
-    val = data_root / "val"
+    root = _resolve_dataset_root(data_root, experiments_dir or Path("./experiments"))
+    val = root / "val"
     for sub in sorted(val.iterdir()):
         if sub.is_dir():
-            for img in sorted(sub.glob("*.JPEG")):
-                return img
+            # Imagewoof uses .JPEG; some datasets use .jpg/.png
+            for ext in ("*.JPEG", "*.jpg", "*.jpeg", "*.png"):
+                for img in sorted(sub.glob(ext)):
+                    return img
     raise FileNotFoundError(f"No val images found under {val}")
 
 
@@ -82,7 +123,7 @@ def build_grid(
     experiments_dir: Path,
     image_path: Path,
     out_path: Path,
-    num_classes: int = 200,
+    num_classes: int | None = None,
     image_size: int = 224,
     target_class: int | None = None,
 ):
@@ -93,6 +134,14 @@ def build_grid(
     runs = list_runs(experiments_dir)
     if not runs:
         raise RuntimeError(f"No runs under {experiments_dir}")
+
+    # Per-run num_classes from saved config.json (falls back to CLI value).
+    # All runs in one experiments_dir are expected to share a num_classes,
+    # but we read per-run so this works even with mixed-dataset directories.
+    fallback = num_classes if num_classes is not None else 200
+    num_classes_per_run: dict[str, int] = {
+        r.name: _read_run_num_classes(r, fallback) for r in runs
+    }
 
     # Use the first run to determine the set of stage epochs.
     stage_ckpts_per_run = {r.name: list_stage_checkpoints(r) for r in runs}
@@ -122,7 +171,7 @@ def build_grid(
                 ax.axis("off")
                 continue
             ckpt_path = ckpts[c]
-            model = load_checkpoint(ckpt_path, num_classes, device)
+            model = load_checkpoint(ckpt_path, num_classes_per_run[run_dir.name], device)
             grayscale = compute_cam(model, input_tensor, target_class=target_class)
             overlay = show_cam_on_image(rgb, grayscale, use_rgb=True)
             ax.imshow(overlay)
@@ -143,18 +192,22 @@ def build_grid(
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--experiments-dir", default="./experiments")
-    ap.add_argument("--data-root", default="./data/tiny-imagenet-200",
-                    help="Used only to pick a default image if --image not given")
+    ap.add_argument("--data-root", default="./data",
+                    help="Parent dir containing the dataset folder. "
+                         "Used only to pick a default image if --image not given.")
     ap.add_argument("--image", default=None,
                     help="Path to a specific test image. Default: first val image")
     ap.add_argument("--out", default="./experiments/grad_cam_grid.png")
-    ap.add_argument("--num-classes", type=int, default=200)
+    ap.add_argument("--num-classes", type=int, default=None,
+                    help="Fallback num_classes if a run's config.json is missing; "
+                         "normally auto-detected per-run")
     ap.add_argument("--image-size", type=int, default=224)
     ap.add_argument("--target-class", type=int, default=None,
                     help="Class index to compute CAM for; default = model's argmax")
     args = ap.parse_args()
 
-    image_path = Path(args.image) if args.image else pick_default_image(Path(args.data_root))
+    image_path = (Path(args.image) if args.image
+                  else pick_default_image(Path(args.data_root), Path(args.experiments_dir)))
     build_grid(
         experiments_dir=Path(args.experiments_dir),
         image_path=image_path,

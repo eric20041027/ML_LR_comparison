@@ -23,7 +23,8 @@ from .utils import accuracy, get_device, get_logger, set_seed
 @dataclass
 class TrainConfig:
     scheduler: str = "cosine"
-    data_root: str = "./data/tiny-imagenet-200"
+    dataset: str = "tiny_imagenet"  # tiny_imagenet | imagewoof (see src.data.DATASETS)
+    data_root: str = "./data"        # parent dir (downloader extracts the dataset folder under it)
     output_dir: str = "./experiments"
     epochs: int = 20
     batch_size: int = 128
@@ -91,11 +92,18 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
         json.dump(asdict(cfg), f, indent=2)
 
     train_loader, val_loader, classes = get_loaders(
+        cfg.dataset,
         cfg.data_root,
         batch_size=cfg.batch_size,
         num_workers=cfg.num_workers,
         image_size=cfg.image_size,
     )
+    if len(classes) != cfg.num_classes:
+        logger.warning(
+            f"num_classes mismatch: cfg={cfg.num_classes}, dataset={len(classes)}. "
+            "Using dataset value."
+        )
+        cfg.num_classes = len(classes)
     steps_per_epoch = len(train_loader)
     logger.info(f"steps_per_epoch={steps_per_epoch}, classes={len(classes)}, device={device}")
 

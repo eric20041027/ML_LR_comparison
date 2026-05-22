@@ -1,4 +1,6 @@
 scheduler: cosine_restart
+dataset: tiny_imagenet
+num_classes: 200
 run_name: cosine_restart
 epochs: 20
 batch_size: 128

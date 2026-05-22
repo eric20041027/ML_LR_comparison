@@ -1,10 +1,11 @@
-scheduler: step
-dataset: tiny_imagenet
-num_classes: 200
-run_name: step
+scheduler: onecycle
+dataset: imagewoof
+num_classes: 10
+run_name: onecycle
 epochs: 20
 batch_size: 128
 base_lr: 3.0e-4
+max_lr: 3.0e-3
 weight_decay: 5.0e-4
 image_size: 224
 num_workers: 2

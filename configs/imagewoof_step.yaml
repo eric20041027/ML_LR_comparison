@@ -1,6 +1,6 @@
 scheduler: step
-dataset: tiny_imagenet
-num_classes: 200
+dataset: imagewoof
+num_classes: 10
 run_name: step
 epochs: 20
 batch_size: 128

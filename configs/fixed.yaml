@@ -1,4 +1,6 @@
 scheduler: fixed
+dataset: tiny_imagenet
+num_classes: 200
 run_name: fixed
 epochs: 20
 batch_size: 128

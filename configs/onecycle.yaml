@@ -1,4 +1,6 @@
 scheduler: onecycle
+dataset: tiny_imagenet
+num_classes: 200
 run_name: onecycle
 epochs: 20
 batch_size: 128
