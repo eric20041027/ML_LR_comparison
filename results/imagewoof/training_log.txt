@@ -1,0 +1,153 @@
+2026-05-22 17:11:54.322090: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-05-22 17:11:54.393007: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+========== running: fixed (fixed) [dataset=imagewoof, profile=a100, bs=384, amp=True, tf32=True] ==========
+/content/ML_LR_comparison/src/train.py:82: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  scaler = GradScaler(enabled=amp_enabled)
+[17:12:03] INFO train.fixed: steps_per_epoch=23, classes=10, device=cuda
+Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to /root/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth
+100% 44.7M/44.7M [00:00<00:00, 228MB/s]
+[17:12:04] INFO train.fixed: capture_epochs=[1, 10, 20]
+[fixed] epoch 1/20:   0% 0/23 [00:00<?, ?it/s]/content/ML_LR_comparison/src/train.py:146: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+/content/ML_LR_comparison/src/train.py:63: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  with autocast(enabled=amp_enabled):
+[17:12:29] INFO train.fixed: epoch 1: train_loss=0.6106 train_acc=80.29 val_loss=0.8620 val_acc=75.29 lr=9.00e-04
+[17:12:29] INFO train.fixed: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/fixed/checkpoints/epoch_001.pth
+[17:12:43] INFO train.fixed: epoch 2: train_loss=0.3118 train_acc=90.15 val_loss=0.5890 val_acc=81.17 lr=9.00e-04
+[17:12:58] INFO train.fixed: epoch 3: train_loss=0.2306 train_acc=92.69 val_loss=0.4561 val_acc=85.62 lr=9.00e-04
+[17:13:12] INFO train.fixed: epoch 4: train_loss=0.1779 train_acc=94.17 val_loss=0.6045 val_acc=82.62 lr=9.00e-04
+[17:13:26] INFO train.fixed: epoch 5: train_loss=0.1620 train_acc=94.23 val_loss=0.5991 val_acc=80.50 lr=9.00e-04
+[17:13:40] INFO train.fixed: epoch 6: train_loss=0.1368 train_acc=95.31 val_loss=0.6188 val_acc=83.07 lr=9.00e-04
+[17:13:54] INFO train.fixed: epoch 7: train_loss=0.1135 train_acc=96.35 val_loss=0.5091 val_acc=85.65 lr=9.00e-04
+[17:14:08] INFO train.fixed: epoch 8: train_loss=0.1076 train_acc=96.18 val_loss=0.8937 val_acc=76.38 lr=9.00e-04
+[17:14:22] INFO train.fixed: epoch 9: train_loss=0.1102 train_acc=96.03 val_loss=0.6246 val_acc=83.53 lr=9.00e-04
+[17:14:37] INFO train.fixed: epoch 10: train_loss=0.0932 train_acc=96.95 val_loss=0.6928 val_acc=82.36 lr=9.00e-04
+[17:14:37] INFO train.fixed: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/fixed/checkpoints/epoch_010.pth
+[17:14:51] INFO train.fixed: epoch 11: train_loss=0.0860 train_acc=97.23 val_loss=0.6519 val_acc=83.91 lr=9.00e-04
+[17:15:05] INFO train.fixed: epoch 12: train_loss=0.0755 train_acc=97.55 val_loss=0.5229 val_acc=86.36 lr=9.00e-04
+[17:15:19] INFO train.fixed: epoch 13: train_loss=0.0734 train_acc=97.70 val_loss=0.8535 val_acc=79.82 lr=9.00e-04
+[17:15:33] INFO train.fixed: epoch 14: train_loss=0.0631 train_acc=97.97 val_loss=0.6208 val_acc=85.49 lr=9.00e-04
+[17:15:47] INFO train.fixed: epoch 15: train_loss=0.0613 train_acc=97.84 val_loss=0.6397 val_acc=84.42 lr=9.00e-04
+[17:16:01] INFO train.fixed: epoch 16: train_loss=0.0629 train_acc=97.97 val_loss=0.6908 val_acc=83.74 lr=9.00e-04
+[17:16:15] INFO train.fixed: epoch 17: train_loss=0.0589 train_acc=97.98 val_loss=0.5674 val_acc=84.78 lr=9.00e-04
+[17:16:29] INFO train.fixed: epoch 18: train_loss=0.0552 train_acc=98.25 val_loss=0.5462 val_acc=86.10 lr=9.00e-04
+[17:16:43] INFO train.fixed: epoch 19: train_loss=0.0528 train_acc=98.22 val_loss=0.7482 val_acc=82.90 lr=9.00e-04
+[17:16:57] INFO train.fixed: epoch 20: train_loss=0.0627 train_acc=98.01 val_loss=0.7807 val_acc=82.67 lr=9.00e-04
+[17:16:57] INFO train.fixed: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/fixed/checkpoints/epoch_020.pth
+[17:16:57] INFO train.fixed: done in 293.1s. best_val_acc=86.36
+
+========== running: step (step) [dataset=imagewoof, profile=a100, bs=384, amp=True, tf32=True] ==========
+[17:16:57] INFO train.step: steps_per_epoch=23, classes=10, device=cuda
+[17:16:57] INFO train.step: capture_epochs=[1, 10, 20]
+[17:17:12] INFO train.step: epoch 1: train_loss=0.6106 train_acc=80.29 val_loss=0.8620 val_acc=75.29 lr=9.00e-04
+[17:17:12] INFO train.step: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/step/checkpoints/epoch_001.pth
+[17:17:26] INFO train.step: epoch 2: train_loss=0.3118 train_acc=90.15 val_loss=0.5890 val_acc=81.17 lr=9.00e-04
+[17:17:40] INFO train.step: epoch 3: train_loss=0.2306 train_acc=92.69 val_loss=0.4561 val_acc=85.62 lr=9.00e-04
+[17:17:55] INFO train.step: epoch 4: train_loss=0.1779 train_acc=94.17 val_loss=0.6045 val_acc=82.62 lr=9.00e-04
+[17:18:08] INFO train.step: epoch 5: train_loss=0.1620 train_acc=94.23 val_loss=0.5991 val_acc=80.50 lr=9.00e-04
+[17:18:22] INFO train.step: epoch 6: train_loss=0.1368 train_acc=95.31 val_loss=0.6188 val_acc=83.07 lr=9.00e-05
+[17:18:36] INFO train.step: epoch 7: train_loss=0.0806 train_acc=97.54 val_loss=0.3382 val_acc=90.15 lr=9.00e-05
+[17:18:51] INFO train.step: epoch 8: train_loss=0.0506 train_acc=98.52 val_loss=0.3178 val_acc=90.68 lr=9.00e-05
+[17:19:05] INFO train.step: epoch 9: train_loss=0.0347 train_acc=99.07 val_loss=0.3083 val_acc=91.04 lr=9.00e-05
+[17:19:19] INFO train.step: epoch 10: train_loss=0.0314 train_acc=99.21 val_loss=0.3120 val_acc=91.22 lr=9.00e-05
+[17:19:19] INFO train.step: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/step/checkpoints/epoch_010.pth
+[17:19:33] INFO train.step: epoch 11: train_loss=0.0240 train_acc=99.50 val_loss=0.3163 val_acc=91.17 lr=9.00e-05
+[17:19:47] INFO train.step: epoch 12: train_loss=0.0233 train_acc=99.51 val_loss=0.3141 val_acc=91.47 lr=9.00e-06
+[17:20:02] INFO train.step: epoch 13: train_loss=0.0193 train_acc=99.59 val_loss=0.3140 val_acc=91.50 lr=9.00e-06
+[17:20:15] INFO train.step: epoch 14: train_loss=0.0181 train_acc=99.72 val_loss=0.3141 val_acc=91.40 lr=9.00e-06
+[17:20:30] INFO train.step: epoch 15: train_loss=0.0205 train_acc=99.57 val_loss=0.3136 val_acc=91.40 lr=9.00e-06
+[17:20:44] INFO train.step: epoch 16: train_loss=0.0169 train_acc=99.68 val_loss=0.3145 val_acc=91.35 lr=9.00e-06
+[17:20:58] INFO train.step: epoch 17: train_loss=0.0174 train_acc=99.74 val_loss=0.3153 val_acc=91.37 lr=9.00e-06
+[17:21:12] INFO train.step: epoch 18: train_loss=0.0173 train_acc=99.73 val_loss=0.3151 val_acc=91.35 lr=9.00e-07
+[17:21:25] INFO train.step: epoch 19: train_loss=0.0171 train_acc=99.64 val_loss=0.3151 val_acc=91.42 lr=9.00e-07
+[17:21:39] INFO train.step: epoch 20: train_loss=0.0155 train_acc=99.72 val_loss=0.3151 val_acc=91.45 lr=9.00e-07
+[17:21:39] INFO train.step: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/step/checkpoints/epoch_020.pth
+[17:21:39] INFO train.step: done in 281.7s. best_val_acc=91.50
+
+========== running: cosine (cosine) [dataset=imagewoof, profile=a100, bs=384, amp=True, tf32=True] ==========
+[17:21:39] INFO train.cosine: steps_per_epoch=23, classes=10, device=cuda
+[17:21:40] INFO train.cosine: capture_epochs=[1, 10, 20]
+[17:21:54] INFO train.cosine: epoch 1: train_loss=0.6106 train_acc=80.29 val_loss=0.8620 val_acc=75.29 lr=8.95e-04
+[17:21:54] INFO train.cosine: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine/checkpoints/epoch_001.pth
+[17:22:09] INFO train.cosine: epoch 2: train_loss=0.3112 train_acc=90.18 val_loss=0.5666 val_acc=82.03 lr=8.78e-04
+[17:22:23] INFO train.cosine: epoch 3: train_loss=0.2284 train_acc=92.67 val_loss=0.4448 val_acc=85.62 lr=8.51e-04
+[17:22:37] INFO train.cosine: epoch 4: train_loss=0.1709 train_acc=94.51 val_loss=0.5759 val_acc=82.90 lr=8.15e-04
+[17:22:51] INFO train.cosine: epoch 5: train_loss=0.1397 train_acc=95.24 val_loss=0.6077 val_acc=81.62 lr=7.70e-04
+[17:23:05] INFO train.cosine: epoch 6: train_loss=0.1104 train_acc=96.37 val_loss=0.5005 val_acc=86.28 lr=7.16e-04
+[17:23:19] INFO train.cosine: epoch 7: train_loss=0.0865 train_acc=97.29 val_loss=0.4339 val_acc=87.07 lr=6.57e-04
+[17:23:33] INFO train.cosine: epoch 8: train_loss=0.0728 train_acc=97.51 val_loss=0.4575 val_acc=87.88 lr=5.92e-04
+[17:23:48] INFO train.cosine: epoch 9: train_loss=0.0643 train_acc=97.93 val_loss=0.4152 val_acc=88.55 lr=5.24e-04
+[17:24:02] INFO train.cosine: epoch 10: train_loss=0.0435 train_acc=98.58 val_loss=0.4482 val_acc=88.24 lr=4.55e-04
+[17:24:02] INFO train.cosine: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine/checkpoints/epoch_010.pth
+[17:24:16] INFO train.cosine: epoch 11: train_loss=0.0334 train_acc=99.01 val_loss=0.3935 val_acc=90.38 lr=3.85e-04
+[17:24:29] INFO train.cosine: epoch 12: train_loss=0.0249 train_acc=99.30 val_loss=0.3686 val_acc=90.18 lr=3.17e-04
+[17:24:43] INFO train.cosine: epoch 13: train_loss=0.0182 train_acc=99.52 val_loss=0.3295 val_acc=91.27 lr=2.52e-04
+[17:24:57] INFO train.cosine: epoch 14: train_loss=0.0114 train_acc=99.72 val_loss=0.3306 val_acc=91.27 lr=1.93e-04
+[17:25:11] INFO train.cosine: epoch 15: train_loss=0.0087 train_acc=99.82 val_loss=0.3386 val_acc=91.32 lr=1.39e-04
+[17:25:25] INFO train.cosine: epoch 16: train_loss=0.0059 train_acc=99.92 val_loss=0.3241 val_acc=91.47 lr=9.41e-05
+[17:25:39] INFO train.cosine: epoch 17: train_loss=0.0061 train_acc=99.88 val_loss=0.3201 val_acc=91.65 lr=5.76e-05
+[17:25:53] INFO train.cosine: epoch 18: train_loss=0.0062 train_acc=99.90 val_loss=0.3204 val_acc=91.80 lr=3.08e-05
+[17:26:07] INFO train.cosine: epoch 19: train_loss=0.0048 train_acc=99.91 val_loss=0.3189 val_acc=91.78 lr=1.45e-05
+[17:26:21] INFO train.cosine: epoch 20: train_loss=0.0035 train_acc=99.94 val_loss=0.3189 val_acc=91.86 lr=9.00e-06
+[17:26:21] INFO train.cosine: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine/checkpoints/epoch_020.pth
+[17:26:22] INFO train.cosine: done in 282.0s. best_val_acc=91.86
+
+========== running: cosine_restart (cosine_restart) [dataset=imagewoof, profile=a100, bs=384, amp=True, tf32=True] ==========
+[17:26:22] INFO train.cosine_restart: steps_per_epoch=23, classes=10, device=cuda
+[17:26:22] INFO train.cosine_restart: capture_epochs=[1, 10, 20]
+[17:26:37] INFO train.cosine_restart: epoch 1: train_loss=0.6106 train_acc=80.29 val_loss=0.8620 val_acc=75.29 lr=8.15e-04
+[17:26:37] INFO train.cosine_restart: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine_restart/checkpoints/epoch_001.pth
+[17:26:51] INFO train.cosine_restart: epoch 2: train_loss=0.3014 train_acc=90.39 val_loss=0.4698 val_acc=84.98 lr=5.92e-04
+[17:27:05] INFO train.cosine_restart: epoch 3: train_loss=0.1937 train_acc=93.93 val_loss=0.4109 val_acc=86.94 lr=3.17e-04
+[17:27:19] INFO train.cosine_restart: epoch 4: train_loss=0.1053 train_acc=96.84 val_loss=0.3247 val_acc=90.43 lr=9.41e-05
+[17:27:33] INFO train.cosine_restart: epoch 5: train_loss=0.0690 train_acc=97.96 val_loss=0.2831 val_acc=91.19 lr=9.00e-04
+[17:27:47] INFO train.cosine_restart: epoch 6: train_loss=0.1180 train_acc=96.13 val_loss=0.7115 val_acc=81.85 lr=8.78e-04
+[17:28:01] INFO train.cosine_restart: epoch 7: train_loss=0.1838 train_acc=93.66 val_loss=0.6360 val_acc=82.79 lr=8.15e-04
+[17:28:15] INFO train.cosine_restart: epoch 8: train_loss=0.1794 train_acc=93.76 val_loss=0.7137 val_acc=79.28 lr=7.16e-04
+[17:28:29] INFO train.cosine_restart: epoch 9: train_loss=0.1168 train_acc=96.20 val_loss=0.5835 val_acc=85.16 lr=5.92e-04
+[17:28:43] INFO train.cosine_restart: epoch 10: train_loss=0.0790 train_acc=97.49 val_loss=0.5129 val_acc=85.90 lr=4.54e-04
+[17:28:43] INFO train.cosine_restart: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine_restart/checkpoints/epoch_010.pth
+[17:28:57] INFO train.cosine_restart: epoch 11: train_loss=0.0421 train_acc=98.74 val_loss=0.3985 val_acc=89.92 lr=3.17e-04
+[17:29:12] INFO train.cosine_restart: epoch 12: train_loss=0.0279 train_acc=99.24 val_loss=0.3617 val_acc=90.66 lr=1.93e-04
+[17:29:26] INFO train.cosine_restart: epoch 13: train_loss=0.0182 train_acc=99.55 val_loss=0.3443 val_acc=91.68 lr=9.41e-05
+[17:29:40] INFO train.cosine_restart: epoch 14: train_loss=0.0140 train_acc=99.67 val_loss=0.3385 val_acc=91.73 lr=3.08e-05
+[17:29:54] INFO train.cosine_restart: epoch 15: train_loss=0.0118 train_acc=99.77 val_loss=0.3318 val_acc=91.86 lr=9.00e-04
+[17:30:09] INFO train.cosine_restart: epoch 16: train_loss=0.0205 train_acc=99.34 val_loss=0.5155 val_acc=87.27 lr=8.95e-04
+[17:30:22] INFO train.cosine_restart: epoch 17: train_loss=0.0768 train_acc=97.42 val_loss=0.8956 val_acc=78.93 lr=8.78e-04
+[17:30:35] INFO train.cosine_restart: epoch 18: train_loss=0.1601 train_acc=94.06 val_loss=1.1838 val_acc=69.41 lr=8.51e-04
+[17:30:49] INFO train.cosine_restart: epoch 19: train_loss=0.1703 train_acc=94.28 val_loss=0.6105 val_acc=84.22 lr=8.15e-04
+[17:31:03] INFO train.cosine_restart: epoch 20: train_loss=0.1191 train_acc=96.04 val_loss=0.5583 val_acc=84.25 lr=7.70e-04
+[17:31:03] INFO train.cosine_restart: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/cosine_restart/checkpoints/epoch_020.pth
+[17:31:03] INFO train.cosine_restart: done in 280.8s. best_val_acc=91.86
+
+========== running: onecycle (onecycle) [dataset=imagewoof, profile=a100, bs=384, amp=True, tf32=True] ==========
+[17:31:03] INFO train.onecycle: steps_per_epoch=23, classes=10, device=cuda
+[17:31:03] INFO train.onecycle: capture_epochs=[1, 10, 20]
+[17:31:19] INFO train.onecycle: epoch 1: train_loss=0.6274 train_acc=81.20 val_loss=0.9045 val_acc=75.59 lr=9.47e-04
+[17:31:19] INFO train.onecycle: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/onecycle/checkpoints/epoch_001.pth
+[17:31:33] INFO train.onecycle: epoch 2: train_loss=0.4036 train_acc=86.83 val_loss=2.8212 val_acc=46.63 lr=2.55e-03
+[17:31:47] INFO train.onecycle: epoch 3: train_loss=0.5711 train_acc=81.15 val_loss=1.6584 val_acc=54.14 lr=4.73e-03
+[17:32:00] INFO train.onecycle: epoch 4: train_loss=0.7081 train_acc=76.71 val_loss=4.2273 val_acc=36.37 lr=6.90e-03
+[17:32:14] INFO train.onecycle: epoch 5: train_loss=0.7391 train_acc=74.89 val_loss=5.6713 val_acc=22.80 lr=8.46e-03
+[17:32:27] INFO train.onecycle: epoch 6: train_loss=0.6877 train_acc=76.88 val_loss=1.6290 val_acc=52.81 lr=9.00e-03
+[17:32:41] INFO train.onecycle: epoch 7: train_loss=0.5992 train_acc=79.90 val_loss=1.4308 val_acc=55.43 lr=8.88e-03
+[17:32:55] INFO train.onecycle: epoch 8: train_loss=0.5245 train_acc=82.24 val_loss=0.8702 val_acc=74.70 lr=8.54e-03
+[17:33:09] INFO train.onecycle: epoch 9: train_loss=0.4561 train_acc=84.78 val_loss=0.9336 val_acc=73.73 lr=7.99e-03
+[17:33:23] INFO train.onecycle: epoch 10: train_loss=0.3966 train_acc=86.48 val_loss=1.1562 val_acc=68.67 lr=7.27e-03
+[17:33:23] INFO train.onecycle: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/onecycle/checkpoints/epoch_010.pth
+[17:33:36] INFO train.onecycle: epoch 11: train_loss=0.3095 train_acc=89.64 val_loss=0.8779 val_acc=75.13 lr=6.41e-03
+[17:33:50] INFO train.onecycle: epoch 12: train_loss=0.2597 train_acc=91.00 val_loss=0.6788 val_acc=80.50 lr=5.46e-03
+[17:34:04] INFO train.onecycle: epoch 13: train_loss=0.2120 train_acc=92.97 val_loss=0.6377 val_acc=82.90 lr=4.46e-03
+[17:34:18] INFO train.onecycle: epoch 14: train_loss=0.1560 train_acc=94.93 val_loss=0.5813 val_acc=83.99 lr=3.46e-03
+[17:34:33] INFO train.onecycle: epoch 15: train_loss=0.1219 train_acc=96.09 val_loss=0.5770 val_acc=84.45 lr=2.51e-03
+[17:34:47] INFO train.onecycle: epoch 16: train_loss=0.0795 train_acc=97.23 val_loss=0.4921 val_acc=86.69 lr=1.66e-03
+[17:35:02] INFO train.onecycle: epoch 17: train_loss=0.0632 train_acc=98.15 val_loss=0.4971 val_acc=87.45 lr=9.55e-04
+[17:35:16] INFO train.onecycle: epoch 18: train_loss=0.0459 train_acc=98.65 val_loss=0.4802 val_acc=88.11 lr=4.27e-04
+[17:35:30] INFO train.onecycle: epoch 19: train_loss=0.0402 train_acc=98.82 val_loss=0.4733 val_acc=88.47 lr=1.03e-04
+[17:35:44] INFO train.onecycle: epoch 20: train_loss=0.0368 train_acc=98.87 val_loss=0.4742 val_acc=88.60 lr=2.50e-07
+[17:35:44] INFO train.onecycle: saved checkpoint: /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/onecycle/checkpoints/epoch_020.pth
+[17:35:45] INFO train.onecycle: done in 281.2s. best_val_acc=88.60
+
+Wrote /content/drive/MyDrive/ML_LR_comparison/experiments/imagewoof/all_summary.json

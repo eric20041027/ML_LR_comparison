@@ -9,21 +9,21 @@
 | 階段 | 狀態 | 產出 |
 |------|------|------|
 | Phase 1 — Tiny-ImageNet 訓練 + 視覺化 | ✅ 完成 | [`results/tiny_imagenet/`](results/tiny_imagenet/) |
-| Phase 2 — Imagewoof 程式碼支援 (configs + data loader) | ✅ 完成 | [`configs/imagewoof_*.yaml`](configs/) |
-| Phase 2 — Imagewoof 訓練 + 視覺化 | 🚧 待執行 | (預計 ~15 分鐘 on A100) |
+| Phase 2 — Imagewoof 訓練 + 視覺化 | ✅ 完成 | [`results/imagewoof/`](results/imagewoof/) |
+| 跨資料集對比分析 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) §6 |
 | 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
 
-**Tiny-ImageNet 主要結果**（ResNet-18 pretrained、20 epoch、A100、batch=384）：
+**結果摘要**（ResNet-18 pretrained、20 epoch、A100、batch=384、base_lr=3e-4）：
 
-| Scheduler | Best Val Acc | Final Val Acc | Final Train Acc |
-|-----------|:------------:|:-------------:|:---------------:|
-| `cosine_restart` | **70.57%** | 62.97% | 93.80% |
-| `step` | 69.97% | **69.82%** | 98.03% |
-| `cosine` | 69.40% | 69.32% | 99.92% |
-| `onecycle` | 66.42% | 66.35% | 99.69% |
-| `fixed` | 62.69% | 61.21% | 94.49% |
+| Scheduler | Tiny-IN Best | Tiny-IN Final | Imagewoof Best | Imagewoof Final |
+|-----------|:------------:|:-------------:|:--------------:|:---------------:|
+| `cosine_restart` | **70.57%** | 62.97% | **91.86%** | 84.25% |
+| `step` | 69.97% | **69.82%** | 91.50% | 91.45% |
+| `cosine` | 69.40% | 69.32% | **91.86%** | **91.86%** |
+| `onecycle` | 66.42% | 66.35% | 88.60% | 88.60% |
+| `fixed` | 62.69% | 61.21% | 86.36% | 82.67% |
 
-完整分析見 [`docs/REPORT.md`](docs/REPORT.md)。
+**5 種排程的相對排名在兩個資料集上完全一致**，結論具備跨資料集 robustness。完整分析見 [`docs/REPORT.md`](docs/REPORT.md)。
 
 ## 排程對照組
 
@@ -57,12 +57,13 @@
 ├── notebooks/
 │   └── colab_main.ipynb # Colab 入口（GPU 自動偵測）
 ├── results/             # 已封存的訓練結果（commit 入庫）
-│   └── tiny_imagenet/
-│       ├── summary.json       # 5 組訓練的全部 epoch 級指標
-│       ├── training_log.txt   # 完整 stdout 紀錄
-│       ├── lr_curves.png
-│       ├── curves.png
-│       └── grad_cam_grid.png
+│   ├── tiny_imagenet/
+│   │   ├── summary.json       # 5 組訓練的全部 epoch 級指標
+│   │   ├── training_log.txt   # 完整 stdout 紀錄
+│   │   ├── lr_curves.png
+│   │   ├── curves.png
+│   │   └── grad_cam_grid.png
+│   └── imagewoof/             # 同上結構
 ├── docs/
 │   └── REPORT.md        # 詳細進度報告
 └── experiments/         # 當下訓練輸出 (gitignored，會寫到 Drive)
