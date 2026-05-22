@@ -78,5 +78,25 @@ python -m src.gradcam_viz --experiments-dir experiments --out grad_cam_grid.png
 
 - 影像 resize 至 **224×224**（ResNet-18 最後一層 conv → 7×7 特徵圖，利於 Grad-CAM）
 - 預設 optimizer: **AdamW**，weight decay 5e-4
-- 各排程在 `configs/*.yaml` 中可獨立調整 base LR / epochs
+- Backbone 採 **ImageNet 預訓練權重** (`torchvision.models.ResNet18_Weights.IMAGENET1K_V1`) 作為起點
+- 各排程在 `configs/*.yaml` 中共用同一 `base_lr` 確保對比公平
 - Checkpoints 在訓練前 / 中 / 晚期各存一份，供 Grad-CAM 對比使用
+
+## Base LR 選擇說明
+
+所有 config 統一採用 `base_lr = 3e-4`（OneCycle 的 `max_lr = 3e-3`），原因如下：
+
+1. **適配 fine-tuning，而非從零訓練。** 既然 backbone 已是 ImageNet 預訓練權重，目標
+   是「微調」而非「重新學表徵」。文獻與業界經驗指出，AdamW fine-tuning 的合理區間
+   為 `1e-4 ~ 5e-4`；過大的 LR (如 1e-3) 在前 1–2 epoch 就會破壞預訓練特徵，反而
+   讓 val accuracy 倒退到接近從零訓練的水準，喪失使用 pretrained 的意義。
+2. **避免 OneCycle 在 warmup 階段直接打爆預訓練特徵。** OneCycle 的峰值 LR 通常設
+   為 base 的 10–30 倍 (本專題取 10 倍 → `max_lr = 3e-3`)。若 base 仍是 1e-3，峰值
+   會衝到 1e-2，等同於從零訓練的學習率，與「微調」精神矛盾。
+3. **保留排程之間的相對行為差異。** 5 種排程共用同一 `base_lr` 才能讓「衰減形狀」
+   成為唯一變量：Fixed 全程平直、Step 兩次斷崖、Cosine 平滑下行、CosineRestart 帶
+   重啟、OneCycle 先升後降。如果為了「衝高絕對精度」而對個別排程調整 LR，對比結
+   論將失去說服力。
+4. **與 A100 profile 的線性 scaling rule 相容。** A100 profile 把 batch 從 128 拉到
+   384 (3×)，並按線性 scaling rule 把 `base_lr × 3 = 9e-4`，仍落在合理 fine-tuning
+   區間內；若 base 是 1e-3，A100 上的有效 LR 會是 3e-3，明顯偏高。

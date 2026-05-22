@@ -2,8 +2,8 @@ scheduler: onecycle
 run_name: onecycle
 epochs: 20
 batch_size: 128
-base_lr: 1.0e-3
-max_lr: 1.0e-2
+base_lr: 3.0e-4
+max_lr: 3.0e-3
 weight_decay: 5.0e-4
 image_size: 224
 num_workers: 2
