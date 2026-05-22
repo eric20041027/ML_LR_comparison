@@ -1,0 +1,9 @@
+scheduler: step
+run_name: step
+epochs: 20
+batch_size: 128
+base_lr: 1.0e-3
+weight_decay: 5.0e-4
+image_size: 224
+num_workers: 2
+pretrained: false
