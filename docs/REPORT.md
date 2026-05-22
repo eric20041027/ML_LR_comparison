@@ -125,14 +125,16 @@ notebooks/            colab_main.ipynb（Colab 一鍵執行）
 ![Grad-CAM grid](../results/tiny_imagenet/grad_cam_grid.png)
 
 行：5 種排程（cosine / cosine_restart / fixed / onecycle / step）
-列：input image、checkpoint @ epoch 1 / 10 / 20
+列：input image (Tiny-ImageNet 驗證集 `val_0.JPEG`，包含人物與物件的戶外場景)、checkpoint @ epoch 1 / 10 / 20
 
 觀察：
 
-- **所有排程在 epoch 1 即已聚焦於主體**（紅色物件中央），這是 ImageNet pretrained 起點的功勞。
-- **隨訓練進行注意力略微收緊**，但差異不如「從零訓練」場景明顯。
-- **Fixed 在 epoch 10、20 注意力範圍較大且擴散**，視覺呈現出「未完全鞏固」的特徵 — 對應其量化結果最差的事實。
-- **OneCycle 在 epoch 10 注意力反而短暫散開**，符合該階段 LR 仍處於高位（~7e-3）造成特徵震盪的現象。
+- **所有排程在 epoch 1 已大致聚焦於畫面中下方的主體區域**，這是 ImageNet pretrained 起點的功勞 — 模型無需從零學習「物件在哪裡」。
+- **CosineRestart 的末次重啟在 ep020 造成注意力明顯偏移**：ep001 / ep010 聚焦於中下方主體，ep020 突然漂移到右上方（白衣人物），與量化結果 best→final 跌 7.6 pt 完全對應，**是「末次重啟破壞收斂」最直接的視覺證據**。
+- **Fixed 在 ep020 注意力區域明顯位移**（從 ep010 的中央到 ep020 的右下角），呈現「無 LR 衰減 → 在最佳解附近震盪 → 末期注意力不穩定」的視覺特徵。
+- **Cosine 與 Step 從 ep001 到 ep020 注意力區域持續收緊但保持在同一語義位置**，視覺上最穩定，呼應其 best=final 的量化結果。
+- **OneCycle 在 ep001 就已較其他排程明顯聚焦**（紅色區域最小最集中），這是 warmup 階段較強 LR 加速收斂的痕跡；但因 base_lr 偏高（peak=9e-3），後續注意力未能持續精煉，停留在類似 epoch 1 的範圍。
+- **質化與量化結果一致**：注意力穩定 (cosine/step) 對應較佳 final acc；注意力末期偏移 (cosine_restart/fixed) 對應 best-final gap。
 
 ---
 
