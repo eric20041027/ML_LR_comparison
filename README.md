@@ -9,22 +9,22 @@
 | 階段 | 狀態 | 產出 |
 |------|------|------|
 | Phase 1 — Tiny-ImageNet 訓練 + 視覺化 | ✅ 完成 | [`results/tiny_imagenet/`](results/tiny_imagenet/) |
-| Phase 2 — Imagewoof 訓練 + 視覺化 | ✅ 完成 | [`results/imagewoof/`](results/imagewoof/) |
-| 跨資料集對比分析 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) §6 |
-| Phase 3 — Imagewoof from-scratch (80ep + MixUp + RandAug) | 🚧 待執行 | (預計 ~100 分鐘 on A100) |
+| Phase 2 — Imagewoof 訓練 + 視覺化 (pretrained) | ✅ 完成 | [`results/imagewoof/`](results/imagewoof/) |
+| Phase 3 — Imagewoof from-scratch (80ep + MixUp + RandAug) | ✅ 完成 | [`results/imagewoof_scratch/`](results/imagewoof_scratch/) |
+| 跨資料集 + 跨訓練狀態對比分析 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) §6, §7 |
 | 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
 
-**結果摘要**（ResNet-18 pretrained、20 epoch、A100、batch=384、base_lr=3e-4）：
+**結果摘要**（ResNet-18、A100、batch=384）：
 
-| Scheduler | Tiny-IN Best | Tiny-IN Final | Imagewoof Best | Imagewoof Final |
-|-----------|:------------:|:-------------:|:--------------:|:---------------:|
-| `cosine_restart` | **70.57%** | 62.97% | **91.86%** | 84.25% |
-| `step` | 69.97% | **69.82%** | 91.50% | 91.45% |
-| `cosine` | 69.40% | 69.32% | **91.86%** | **91.86%** |
-| `onecycle` | 66.42% | 66.35% | 88.60% | 88.60% |
-| `fixed` | 62.69% | 61.21% | 86.36% | 82.67% |
+| Scheduler | Tiny-IN Best | Imagewoof Best (pre) | Imagewoof Best (scratch) | 排名變化 |
+|-----------|:------------:|:--------------------:|:------------------------:|:--------:|
+| `cosine_restart` | 70.57% | **91.86%** | 82.13% | 1→1→3 |
+| `step` | 69.97% | 91.50% | 79.84% | 2→3→**5** ⬇️ |
+| `cosine` | 69.40% | **91.86%** | 84.12% | 3→1→2 (最穩) |
+| `onecycle` | 66.42% | 88.60% | **86.71%** ⭐ | 4→4→**1** ⬆️ |
+| `fixed` | 62.69% | 86.36% | 80.63% | 5→5→4 |
 
-**5 種排程的相對排名在兩個資料集上完全一致**，結論具備跨資料集 robustness。完整分析見 [`docs/REPORT.md`](docs/REPORT.md)。
+**關鍵發現**：scheduler 排名在 pretrained 場景跨資料集穩定，但**換到 from-scratch 場景出現重大反轉** — OneCycle 從第 4 躍居第 1，Step 從第 2 跌至第 5。「最佳 scheduler」是**訓練狀態相依**的。完整分析見 [`docs/REPORT.md`](docs/REPORT.md)。
 
 ## 排程對照組
 
@@ -58,13 +58,9 @@
 ├── notebooks/
 │   └── colab_main.ipynb # Colab 入口（GPU 自動偵測）
 ├── results/             # 已封存的訓練結果（commit 入庫）
-│   ├── tiny_imagenet/
-│   │   ├── summary.json       # 5 組訓練的全部 epoch 級指標
-│   │   ├── training_log.txt   # 完整 stdout 紀錄
-│   │   ├── lr_curves.png
-│   │   ├── curves.png
-│   │   └── grad_cam_grid.png
-│   └── imagewoof/             # 同上結構
+│   ├── tiny_imagenet/         # 結構：summary.json + training_log.txt + 3 個 png
+│   ├── imagewoof/             # 同上 (pretrained, 20 epoch)
+│   └── imagewoof_scratch/     # 同上 (from scratch, 80 epoch + MixUp + RandAug)
 ├── docs/
 │   └── REPORT.md        # 詳細進度報告
 └── experiments/         # 當下訓練輸出 (gitignored，會寫到 Drive)
