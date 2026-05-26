@@ -13,7 +13,9 @@ PROFILES: dict[str, dict[str, Any]] = {
     "t4": {
         "batch_size": 128,
         "num_workers": 2,
-        "use_amp": False,
+        # T4 (Turing, sm_75) has FP16 Tensor Cores -> AMP gives ~1.5x speedup.
+        # TF32 is Ampere-only so stays disabled.
+        "use_amp": True,
         "tf32": False,
         "lr_scale": 1.0,
     },
