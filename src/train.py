@@ -41,6 +41,8 @@ class TrainConfig:
     aug: str = "basic"               # "basic" | "strong" (adds RandAugment)
     mixup_alpha: float = 0.0          # 0 disables; typical 0.1 - 0.4
     label_smoothing: float = 0.0      # 0 disables; typical 0.1
+    # Per-epoch Grad-CAM PNG saving (for GIF assembly). False = no overhead.
+    gradcam_per_epoch: bool = False
     # Capture checkpoints at these epoch indices (1-based). If None, auto-pick
     # early / mid / late based on `epochs`.
     capture_epochs: list[int] | None = None
@@ -54,6 +56,85 @@ class TrainConfig:
         if self.capture_epochs:
             return sorted(set(self.capture_epochs))
         return sorted({1, max(1, self.epochs // 2), self.epochs})
+
+
+def _setup_per_epoch_cam(cfg, model, device, logger):
+    """Return a callable save_cam(epoch) that renders a Grad-CAM overlay on a
+    fixed val image and writes `cam_per_epoch/epoch_NNN.png`. Returns None if
+    disabled or setup fails.
+
+    The test image is auto-picked: first alphabetically-sorted val image in the
+    first alphabetically-sorted class folder of the dataset.
+    """
+    if not cfg.gradcam_per_epoch:
+        return None
+
+    import numpy as np
+    from PIL import Image as PILImage
+    from torchvision import transforms
+
+    from .data import IMAGENET_MEAN, IMAGENET_STD, _resolve_data_root
+    from .model import get_target_layer
+
+    try:
+        dataset_root = _resolve_data_root(cfg.dataset, cfg.data_root)
+        val_dir = dataset_root / "val"
+        image_path = None
+        for sub in sorted(val_dir.iterdir()):
+            if not sub.is_dir():
+                continue
+            for ext in ("*.JPEG", "*.jpg", "*.jpeg", "*.png"):
+                files = sorted(sub.glob(ext))
+                if files:
+                    image_path = files[0]
+                    break
+            if image_path:
+                break
+        if image_path is None:
+            logger.warning("per_epoch_cam: no val image found; disabling")
+            return None
+    except Exception as e:
+        logger.warning(f"per_epoch_cam setup failed: {e}; disabling")
+        return None
+
+    logger.info(f"per_epoch_cam enabled on: {image_path.name}")
+
+    # Preprocess test image once (cache as both PIL RGB and tensor on device).
+    img = PILImage.open(image_path).convert("RGB")
+    rgb_pil = transforms.Compose([
+        transforms.Resize(cfg.image_size),
+        transforms.CenterCrop(cfg.image_size),
+    ])(img)
+    rgb_np = np.array(rgb_pil).astype(np.float32) / 255.0
+    input_tensor = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+    ])(rgb_pil).unsqueeze(0).to(device)
+
+    run_name = cfg.run_name or cfg.scheduler
+    cam_dir = Path(cfg.output_dir) / run_name / "cam_per_epoch"
+    cam_dir.mkdir(parents=True, exist_ok=True)
+
+    # Also save the input image once so the GIF maker doesn't need to resolve it.
+    rgb_pil.save(cam_dir / "input.png")
+
+    target_layer = get_target_layer(model)
+
+    def save_cam(epoch: int):
+        from pytorch_grad_cam import GradCAM
+        from pytorch_grad_cam.utils.image import show_cam_on_image
+        was_training = model.training
+        model.eval()
+        try:
+            cam = GradCAM(model=model, target_layers=[target_layer])
+            gray = cam(input_tensor=input_tensor, targets=None)[0]
+            overlay = show_cam_on_image(rgb_np, gray, use_rgb=True)
+            PILImage.fromarray(overlay).save(cam_dir / f"epoch_{epoch:03d}.png")
+        finally:
+            if was_training:
+                model.train()
+
+    return save_cam
 
 
 def _eval(model: nn.Module, loader, device, criterion, use_amp: bool = False) -> tuple[float, float]:
@@ -136,6 +217,9 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     scheduler = bundle.scheduler
     step_granularity = bundle.step_granularity
 
+    # Per-epoch Grad-CAM (writes a PNG per epoch on a fixed val image).
+    cam_saver = _setup_per_epoch_cam(cfg, model, device, logger)
+
     writer = SummaryWriter(log_dir=str(out_dir / "tb"))
     capture_epochs = set(cfg.resolve_capture_epochs())
     logger.info(f"capture_epochs={sorted(capture_epochs)}")
@@ -211,6 +295,9 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
             f"epoch {epoch}: train_loss={train_loss:.4f} train_acc={train_acc:.2f} "
             f"val_loss={val_loss:.4f} val_acc={val_acc:.2f} lr={sched_mod.current_lr(optimizer):.2e}"
         )
+
+        if cam_saver is not None:
+            cam_saver(epoch)
 
         if epoch in capture_epochs:
             ckpt_path = ckpt_dir / f"epoch_{epoch:03d}.pth"

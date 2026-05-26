@@ -28,6 +28,9 @@ def main():
     ap.add_argument("--profile", default="none",
                     choices=["none", *sorted(PROFILES)],
                     help="GPU profile: applies batch/workers/amp/tf32 + LR scaling")
+    ap.add_argument("--gradcam-per-epoch", action="store_true",
+                    help="Save a Grad-CAM PNG every epoch on a fixed val image "
+                         "(for GIF assembly via scripts.make_cam_gif)")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -37,6 +40,8 @@ def main():
         cfg.output_dir = args.output_dir
     if args.epochs is not None:
         cfg.epochs = args.epochs
+    if args.gradcam_per_epoch:
+        cfg.gradcam_per_epoch = True
     apply_profile(cfg, args.profile)
 
     summary = train(cfg)

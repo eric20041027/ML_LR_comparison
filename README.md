@@ -13,6 +13,7 @@
 | Phase 3 — Imagewoof from-scratch (80ep + MixUp + RandAug) | ✅ 完成 | [`results/imagewoof_scratch/`](results/imagewoof_scratch/) |
 | 跨資料集 + 跨訓練狀態對比分析 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) §6, §7 |
 | 詳細進度報告 | ✅ 完成 | [`docs/REPORT.md`](docs/REPORT.md) |
+| 每 epoch Grad-CAM 演進 GIF | 🚧 待重跑 | (預計 ~4 小時 A100 跑完 3 組實驗) |
 
 **結果摘要**（ResNet-18、A100、batch=384）：
 
